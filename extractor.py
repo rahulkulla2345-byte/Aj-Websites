@@ -1,49 +1,66 @@
-from playwright.sync_api import sync_playwright
-from bs4 import BeautifulSoup
-from urllib.parse import urljoin
+from playwright.async_api import async_playwright
+import asyncio
 
 
-IMPORTANT_PATHS = [
-    "",
-    "/about",
-    "/services",
-    "/solutions",
-    "/case-studies",
-    "/testimonials",
-    "/faq",
-]
+async def scrape_page(page, url):
+
+    try:
+
+        await page.goto(url, timeout=60000)
+
+        await page.wait_for_timeout(3000)
+
+        content = await page.content()
+
+        return content
+
+    except Exception as e:
+
+        print(f"Failed to scrape {url}: {e}")
+
+        return ""
 
 
-def scrape_site(base_url):
-    pages = {}
+async def scrape_site_async(base_url):
 
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
+    data = {}
 
-        page = browser.new_page()
+    async with async_playwright() as playwright:
 
-        for path in IMPORTANT_PATHS:
+        browser = await playwright.chromium.launch(
+            headless=True,
+            args=[
+                "--no-sandbox",
+                "--disable-dev-shm-usage"
+            ]
+        )
 
-            try:
-                url = urljoin(base_url, path)
+        page = await browser.new_page()
 
-                print(f"Visiting: {url}")
+        urls_to_visit = [
+            base_url,
+            f"{base_url}/about",
+            f"{base_url}/services",
+            f"{base_url}/industries",
+            f"{base_url}/who-we-help",
+            f"{base_url}/clients",
+            f"{base_url}/solutions"
+        ]
 
-                page.goto(url, timeout=60000)
+        for url in urls_to_visit:
 
-                page.wait_for_timeout(3000)
+            print(f"Scraping: {url}")
 
-                html = page.content()
+            content = await scrape_page(page, url)
 
-                soup = BeautifulSoup(html, "lxml")
+            if content:
+                data[url] = content
 
-                text = soup.get_text(separator=" ", strip=True)
+        await browser.close()
 
-                pages[url] = text
+    return data
 
-            except Exception as e:
-                print(f"Failed: {url} -> {e}")
 
-        browser.close()
+def scrape_site(url):
 
-    return pages
+    return asyncio.run(scrape_site_async(url))

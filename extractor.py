@@ -28,6 +28,7 @@ async def scrape_site_async(base_url):
     async with async_playwright() as playwright:
 
         browser = await playwright.chromium.launch(
+            channel="chrome",
             headless=True,
             args=[
                 "--no-sandbox",

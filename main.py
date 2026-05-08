@@ -9,6 +9,8 @@ from analyzer import analyze_website
 
 OUTPUT_FILE = "output/results.csv"
 
+os.makedirs("output", exist_ok=True)
+
 
 def save_result(data):
 
@@ -34,7 +36,7 @@ def process_website(url):
 
         cleaned = clean_text(content)
 
-        combined_content += f"\\n\\nPAGE: {page_url}\\n"
+        combined_content += f"\n\nPAGE: {page_url}\n"
 
         combined_content += cleaned
 
